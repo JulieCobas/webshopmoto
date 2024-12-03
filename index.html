@@ -1,0 +1,141 @@
+<!-- Projet Site Web - Moto - Julie Cobas 15.04.2024 -->
+
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="author" content="Julie Cobas">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="./css/style.css">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+        <title>Honda</title>
+    </head>
+    <body>
+        <div id="app"> 
+            <!-- Barre de navigation-->
+            <section class="navigation">
+                <nav class="navbar navbar-expand navbar-dark bg-dark">
+                    <div class="container-fluid">
+                        <a class="navbar-brand me-5 " href="#">
+                            <img src="img/logo-honda-white.png" alt="Logo Honda" height="30"> 
+                            <span style="margin-left: 5px;">Honda</span>    
+                        </a>
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item me-5">
+                                <a class="nav-link" style="margin-left: 50px;" aria-current="page" href="#"> Accueil </a>
+                            </li>
+                            <li class="nav-item me-5">
+                                <a class="nav-link active" href="#"> Modèles </a> <!-- Activer par défaut-->
+                            </li>
+                            <li class="nav-item me-5">
+                                <a class="nav-link" href="#"> Offres </a>
+                            </li>
+                            <li class="nav-item me-5">
+                                <a class="nav-link" href="#"> Services </a>
+                            </li>
+                        </ul>
+                        <form class="d-flex" role="search">
+                            <input class="form-control me-2" type="search" placeholder="Rechercher" aria-label="Search">
+                        </form>
+                    </div>
+                </nav>
+            </section>
+            <!-- Contenu principal-->
+            <section class="main-wrap">
+                <div class="container">
+                    <div class="row">
+                        <!-- Visualisation des produits disponibles -->
+                        <div class="col-md-8">
+                            <div class="product">
+                                <!-- Image produit-->
+                                <div class="image-gallery">
+                                    <img v-bind:src="produits[index].image" alt="produits[index].modele">
+                                </div>
+                                <!--Details du produit-->
+                                <div class="product-details">
+                                    <div class="details">
+                                        <h2>{{produits[index].modele}}</h2>
+                                        <h3> CHF {{formatPrix(produits[index].prix)}} .-</h3>
+                                        <h4>RABAIS 25%</h4> <!--Juste pour décorer ! ;) -->
+                                        <p>{{produits[index].description}}</p>
+                                    </div>
+                                    <!--Variantes couleurs-->
+                                    <div class="colors">
+                                        <form class="form">
+                                            <div class="select-color">
+                                                <h3>Couleur:</h3>
+                                                    <div v-for="(produit, index) in produits" v-bind:key="produit.id" @click="changeIndex(index)">
+                                                        <label>
+                                                            <input type="radio" v-bind:style="{backgroundColor:produit.color}">
+                                                            <span v-bind:style="{backgroundColor: produit.color}" class="color-circle"></span>
+                                                        </label>
+                                                    </div>
+                                            </div>   
+                                        </form>
+                                    </div>
+                                    <!--Quantité-->
+                                    <div class="quantity">
+                                        <div class="select-quantity">
+                                            <h3>Quantité:</h3>
+                                            <input type="number" name="quantity" v-model="quantiteSelectionnee" min="1" value="1">
+                                        </div>
+                                    </div>
+                                    <!--Gestion du stock -->
+                                    <div class="stock">
+                                        <h4 div class="stock_epuise" style="color: red;" v-if="produits[index].stock <= 2 && produits[index].stock > 0">
+                                            Presque épuisé 
+                                        </h4>
+                                        <h4 div class="stock_rupture" style="color: red;" v-else-if="produits[index].stock === 0">
+                                            En rupture de stock
+                                        </h4>
+                                    </div>
+                                    <!--Ajouter au panier-->
+                                    <div class="sub-btn">
+                                        <button class="submit" @click="ajouterAuPanier(index)">Ajouter au Panier</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Panier -->
+                        <div class="col-md-3 panier" v-bind:class="{ 'panier-visible': panier.length > 0 }">
+                            <h2>Panier</h2>
+                            <!-- Liste du panier -->
+                            <ul class="list-group">
+                                <li v-for="item in panier" class="list-group-item d-flex justify-content-between align-items-center" :key="item.id">
+                                    <div class="d-flex align-items-center">
+                                        <!--Image du produit sélectionné -->
+                                        <img v-bind:src="item.image" alt="Image de {{ item.modele }}" class="img-thumbnail me-2" style="width: 100px; height: 100px; object-fit: cover;">
+                                        <!-- Nom du produit sélectionné -->
+                                        <div>{{ item.modele }}</div>
+                                    </div>
+                                    <div>
+                                        <!-- Quantité du produit sélectionné -->
+                                        <span class="badge bg-primary rounded-pill me-2">{{ item.quantite }}</span>
+                                        <!-- Suppression de la quantité du produit sélectionné -->
+                                        <i class="fas fa-trash-alt text-danger" @click="retirerArticle(item.id)"></i>
+                                    </div>
+                                </li>
+                            </ul>
+                            <!-- Condition client premium -->
+                            <div class="premium">
+                                <p v-if="statutClient" style="color: red;">{{ statutClient }} 🎉</p>
+                            </div>
+                            <!-- Total du panier -->
+                            <div class="total">
+                                <h3>Total : CHF {{ totalPanier }} .-</h3>
+                            </div>
+                            <!-- Payer -->
+                            <button class="bouton_submit btn btn-primary" @click="payer()"> Payer </button>
+                            <!-- Supprimer le contenu du panier -->
+                            <div class="supprimer_panier">
+                                <button class="vider_panier btn btn-danger" @click="viderPanier">Vider le Panier</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <script src="index.js"></script>
+    </body>
+</html>
